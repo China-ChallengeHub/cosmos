@@ -46,20 +46,18 @@ def main():
 
     if args.model_choice == "large":
         args.per_gpu_train_batch_size = 1
-        args.per_gpu_eval_batch_size = 2
+        args.per_gpu_eval_batch_size  = 2
         args.model_name_or_path = os.path.join(grg_dir, "pretrained_model/roberta-large")
     elif args.model_choice == "base":
-        args.per_gpu_train_batch_size = 3
-        args.per_gpu_eval_batch_size = 4
+        args.per_gpu_train_batch_size = 4
+        args.per_gpu_eval_batch_size  = 4
         args.model_name_or_path = os.path.join(grg_dir, "pretrained_model/roberta-base")
     else:
         raise ValueError
 
     args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
     args.eval_batch_size  = args.per_gpu_eval_batch_size  * max(1, args.n_gpu)
-
-    if not os.path.exists(args.output_dir):
-        os.mkdir(args.output_dir)
+    os.makedirs(args.output_dir, exist_ok=True)
 
     if args.model_choice == "base":
         if args.bert_model_choice == "fusion_head":

@@ -1,4 +1,6 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import os
 import sys
@@ -51,51 +53,53 @@ def set_seed(args):
     if args.n_gpu > 0:
         torch.cuda.manual_seed_all(args.seed)  # 为所有GPU设置随机种子
     # torch.backends.cudnn.deterministic = True
-    # torch.backends.cudnn.benchmark = False
+    # torch.backends.cudnn.benchmark     = False
 
 
 def init_optimizer(args, train_dataloader, model):
+    # debug 1
+    # args.num_train_epochs = 3
+    args.num_train_epochs = 5
+    # args.num_train_epochs = 10
+
     if args.max_steps > 0:
         t_total = args.max_steps
         args.num_train_epochs = args.max_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1
     else:
         t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.num_train_epochs
 
-    # debug 1:
-    # args.warmup_steps = 0
+    # debug 2:
+    args.warmup_steps = 0
     # args.warmup_steps = 1000
     # args.warmup_steps = 1500
-    args.warmup_steps = int(t_total * 0.1)
-
-    # debug 2:
-    # args.adam_epsilon = 1e-6
-    # args.adam_epsilon = 1e-8
+    # args.warmup_steps = int(t_total * 0.1)
 
     # debug 3:
-    # args.learning_rate = 1e-5
+    args.adam_epsilon = 1e-6
+    # args.adam_epsilon = 1e-8
+
+    # debug 4:
+    args.weight_decay = 0.01
+    # args.weight_decay = 0
+
+    # debug 5:
+    args.learning_rate = 1e-5
     # args.learning_rate = 2e-5
     # args.learning_rate = 3e-5
 
-    # debug 4:
+    # debug 6:
     # args.seed = 42
     # args.seed = 5233
-
-    # debug 5
-    # args.num_train_epochs = 5
-    # args.num_train_epochs = 10
-
-    # debug 6:
-    # weight_decay:
 
     print("args.num_train_epochs = ", args.num_train_epochs)
     print("args.train_batch_size = ", args.train_batch_size)
     print("args.eval_batch_size = ",  args.eval_batch_size)
     print("args.n_gpu = ",            args.n_gpu)
     print("args.seed = ",             args.seed)
-    print("args.adam_epsilon = ",     args.adam_epsilon)
     print("args.warmup_steps = ",     args.warmup_steps)
-    print("args.learning_rate = ",    args.learning_rate)
+    print("args.adam_epsilon = ",     args.adam_epsilon)
     print("args.weight_decay = ",     args.weight_decay)
+    print("args.learning_rate = ",    args.learning_rate)
 
     args_path = os.path.join(args.output_dir, "args.json")
     with open(args_path, "w", encoding="utf-8") as writer:
@@ -104,7 +108,7 @@ def init_optimizer(args, train_dataloader, model):
     # Prepare optimizer and schedule (linear warmup and decay)
     no_decay = ['bias', 'LayerNorm.weight']
     optimizer_grouped_parameters = [
-        {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)], 'weight_decay': 0.01},
+        {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)], 'weight_decay': args.weight_decay},
         {'params': [p for n, p in model.named_parameters() if     any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
     ]
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
@@ -125,17 +129,6 @@ def train(args, train_dataset, dev_dataset, model, tokenizer):
     train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size)
 
     model, optimizer, scheduler, t_total = init_optimizer(args, train_dataloader, model)
-
-    # Train!
-    # logger.info("***** Running training *****")
-    # logger.info("  Num examples = %d", len(train_dataset))
-    # logger.info("  Num Epochs = %d", args.num_train_epochs)
-    # logger.info("  Instantaneous batch size per GPU = %d", args.per_gpu_train_batch_size)
-    # logger.info("  Total train batch size (w. parallel, distributed & accumulation) = %d",
-    #             args.train_batch_size * args.gradient_accumulation_steps * (
-    #             torch.distributed.get_world_size() if args.local_rank != -1 else 1))
-    # logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
-    # logger.info("  Total optimization steps = %d", t_total)
 
     tr_step, global_step = 0, 0
     tr_loss, logging_loss = 0.0, 0.0
@@ -176,6 +169,7 @@ def train(args, train_dataset, dev_dataset, model, tokenizer):
             epoch_step += 1
 
             if (step + 1) % args.gradient_accumulation_steps == 0:
+                # debug 7: gradient clip
                 # torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
                 optimizer.step()
                 scheduler.step()  # Update learning rate schedule
