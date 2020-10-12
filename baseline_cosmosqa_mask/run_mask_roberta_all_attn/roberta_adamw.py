@@ -69,6 +69,7 @@ def init_optimizer(args, train_dataloader, model):
         t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.num_train_epochs
 
     # debug 2:
+    args.t_total = t_total
     args.warmup_steps = 0
     # args.warmup_steps = 1000
     # args.warmup_steps = 1500
@@ -92,6 +93,7 @@ def init_optimizer(args, train_dataloader, model):
     # args.seed = 5233
 
     print("args.num_train_epochs = ", args.num_train_epochs)
+    print("args.t_total = ",          args.t_total)
     print("args.train_batch_size = ", args.train_batch_size)
     print("args.eval_batch_size = ",  args.eval_batch_size)
     print("args.n_gpu = ",            args.n_gpu)

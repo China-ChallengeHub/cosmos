@@ -47,11 +47,11 @@ def main():
 
     if args.model_choice == "large":
         args.per_gpu_train_batch_size = 1
-        args.per_gpu_eval_batch_size = 2
+        args.per_gpu_eval_batch_size  = 2
         args.model_name_or_path = os.path.join(grg_dir, "pretrained_model/roberta-large")
     elif args.model_choice == "base":
         args.per_gpu_train_batch_size = 4
-        args.per_gpu_eval_batch_size = 4
+        args.per_gpu_eval_batch_size  = 4
         args.model_name_or_path = os.path.join(grg_dir, "pretrained_model/roberta-base")
     else:
         raise ValueError
@@ -98,7 +98,8 @@ def main():
 
     tokenizer = tokenizer_class.from_pretrained(args.model_name_or_path, do_lower_case=args.do_lower_case)
 
-    args.model_name_or_path = os.path.join(gra_dir, "checkpoint/best/output_base_lr_1e-5_bz_12_epoch_5_adamw_warmup_step_0_fusion_layer")
+    model_name = "checkpoint/best/output_base_lr_1e-5_bz_12_epoch_5_adamw_warmup_step_0_fusion_layer"
+    args.model_name_or_path = os.path.join(gra_dir, model_name)
     model = model_class.from_pretrained(args.model_name_or_path)
     model.cuda()
     # multi-gpu training (should be after apex fp16 initialization)
