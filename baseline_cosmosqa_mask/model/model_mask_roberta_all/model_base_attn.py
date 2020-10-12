@@ -379,16 +379,21 @@ class RobertaForMultipleChoice_Fusion_Layer(BertPreTrainedModel):
         self.layer_size = int(self.hidden_size / self.n_layer)
 
         self.roberta = RobertaModel(config)
-        self.transformer_mrc = Trans_Encoder_layer(n_layers=3, n_head=12, d_k=64, d_v=64,
-                                                   d_model=768, d_inner=4096, dropout=0.1)
+        self.transformer_mrc = Trans_Encoder_layer(n_layers=3,
+                                                   n_head=12,
+                                                   d_k=64,
+                                                   d_v=64,
+                                                   d_model=768,
+                                                   d_inner=4096,
+                                                   dropout=0.1)
 
         self.pooler = BertPooler(config)
 
         self.linear = nn.Linear(self.hidden_size, self.n_layer * 4)
         self.softmax = nn.Softmax(dim=-1)
 
-        self.bn = torch.nn.BatchNorm1d(num_features=config.hidden_size)
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.bn         = torch.nn.BatchNorm1d(num_features=config.hidden_size)
+        self.dropout    = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, 1)
 
         self.init_weights()
@@ -423,8 +428,8 @@ class RobertaForMultipleChoice_Fusion_Layer(BertPreTrainedModel):
         flat_position_ids    = None
         flat_head_mask       = None
 
-        # bert_attn:     (batch_size * choice_num) * seq_len * hidden
-        # pooled_output: (batch_size * choice_num) * hidden
+        # bert_attn:     [batch_size * choice_num, seq_len, hidden]
+        # pooled_output: [batch_size * choice_num, hidden]
         roberta_attn, pooled_output = self.roberta(input_ids=flat_input_ids,
                                                    token_type_ids=flat_token_type_ids,
                                                    attention_mask=flat_attention_mask,

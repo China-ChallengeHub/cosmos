@@ -70,8 +70,8 @@ def init_optimizer(args, train_dataloader, model):
 
     # debug 2:
     args.t_total = t_total
-    args.warmup_steps = 0
-    # args.warmup_steps = 1000
+    # args.warmup_steps = 0
+    args.warmup_steps = 1000
     # args.warmup_steps = 1500
     # args.warmup_steps = int(t_total * 0.1)
 
