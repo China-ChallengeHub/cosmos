@@ -84,8 +84,8 @@ def init_optimizer(args, train_dataloader, model):
     # args.weight_decay = 0
 
     # debug 5:
-    args.learning_rate = 1e-5
-    # args.learning_rate = 2e-5
+    # args.learning_rate = 1e-5
+    args.learning_rate = 2e-5
     # args.learning_rate = 3e-5
 
     # debug 6:
