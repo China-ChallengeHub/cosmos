@@ -70,22 +70,22 @@ def init_optimizer(args, train_dataloader, model):
 
     # debug 2:
     args.t_total = t_total
-    # args.warmup_steps = 0
-    args.warmup_steps = 1000
+    args.warmup_steps = 0
+    # args.warmup_steps = 1000
     # args.warmup_steps = 1500
     # args.warmup_steps = int(t_total * 0.1)
 
     # debug 3:
-    args.adam_epsilon = 1e-6
-    # args.adam_epsilon = 1e-8
+    # args.adam_epsilon = 1e-6
+    args.adam_epsilon = 1e-8
 
     # debug 4:
     args.weight_decay = 0.01
     # args.weight_decay = 0
 
     # debug 5:
-    # args.learning_rate = 1e-5
-    args.learning_rate = 2e-5
+    args.learning_rate = 1e-5
+    # args.learning_rate = 2e-5
     # args.learning_rate = 3e-5
 
     # debug 6:
