@@ -80,7 +80,9 @@ def init_optimizer(args, train_dataloader, model):
     args.adam_epsilon = 1e-8
 
     # debug 4:
-    args.weight_decay = 0.01
+    args.weight_decay = 0.1
+    # args.weight_decay = 0.05
+    # args.weight_decay = 0.01
     # args.weight_decay = 0
 
     # debug 5:
