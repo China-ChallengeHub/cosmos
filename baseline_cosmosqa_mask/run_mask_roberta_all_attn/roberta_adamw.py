@@ -80,9 +80,10 @@ def init_optimizer(args, train_dataloader, model):
     args.adam_epsilon = 1e-8
 
     # debug 4:
-    args.weight_decay = 0.1
+    # args.weight_decay = 0.1
     # args.weight_decay = 0.05
-    # args.weight_decay = 0.01
+    # args.weight_decay = 0.02
+    args.weight_decay = 0.01
     # args.weight_decay = 0
 
     # debug 5:
@@ -104,6 +105,7 @@ def init_optimizer(args, train_dataloader, model):
     print("args.adam_epsilon = ",     args.adam_epsilon)
     print("args.weight_decay = ",     args.weight_decay)
     print("args.learning_rate = ",    args.learning_rate)
+    print("args.max_grad_norm = ",    args.max_grad_norm)
 
     args_path = os.path.join(args.output_dir, "args.json")
     with open(args_path, "w", encoding="utf-8") as writer:
