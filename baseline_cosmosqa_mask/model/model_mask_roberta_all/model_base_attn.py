@@ -92,9 +92,9 @@ class Trans_Encoder_layer(nn.Module):
 
         enc_slf_attn_list = []
 
-        batch_size = enc_output.size(0)
-        seq_len = enc_output.size(1)
-        hidden_size = enc_output.size(2)
+        # batch_size = enc_output.size(0)
+        # seq_len = enc_output.size(1)
+        # hidden_size = enc_output.size(2)
 
         for idx, enc_layer in enumerate(self.layer_stack):
             _slf_attn_mask = slf_attn_mask[idx]
@@ -106,9 +106,9 @@ class Trans_Encoder_layer(nn.Module):
             if return_attns:
                 enc_slf_attn_list += [enc_slf_attn]
 
-        enc_output = enc_output.view(-1, hidden_size)
-        enc_output = self.bn(enc_output)
-        enc_output = enc_output.view(batch_size, seq_len, hidden_size)
+        # enc_output = enc_output.view(-1, hidden_size)
+        # enc_output = self.bn(enc_output)
+        # enc_output = enc_output.view(batch_size, seq_len, hidden_size)
 
         if return_attns:
             return enc_output, enc_slf_attn_list
@@ -368,7 +368,7 @@ class RobertaForMultipleChoice_Fusion_Head(BertPreTrainedModel):
 
 
 class RobertaForMultipleChoice_Fusion_Layer(BertPreTrainedModel):
-    # Commonsense_Mask + Dependency_Mask + Entity_Mask + sentiment_Mask
+    # Commonsense_Mask + Dependency_Mask + Entity_Mask + Sentiment_Mask
     def __init__(self, config):
         print("[TIME] --- time: {} ---, init model fusion layer".format(time.ctime(time.time())))
         super(RobertaForMultipleChoice_Fusion_Layer, self).__init__(config)
@@ -376,7 +376,7 @@ class RobertaForMultipleChoice_Fusion_Layer(BertPreTrainedModel):
         self.n_head = int(config.num_attention_heads)
         self.n_layer = 3
         self.hidden_size = int(config.hidden_size)
-        self.layer_size = int(self.hidden_size / self.n_layer)
+        self.layer_size  = int(self.hidden_size / self.n_layer)
 
         self.roberta = RobertaModel(config)
         self.transformer_mrc = Trans_Encoder_layer(n_layers=3,
@@ -389,7 +389,7 @@ class RobertaForMultipleChoice_Fusion_Layer(BertPreTrainedModel):
 
         self.pooler = BertPooler(config)
 
-        self.linear = nn.Linear(self.hidden_size, self.n_layer * 4)
+        self.linear  = nn.Linear(self.hidden_size, self.n_layer * 4)
         self.softmax = nn.Softmax(dim=-1)
 
         self.bn         = torch.nn.BatchNorm1d(num_features=config.hidden_size)
