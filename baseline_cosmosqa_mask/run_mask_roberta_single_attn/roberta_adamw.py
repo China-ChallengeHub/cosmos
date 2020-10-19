@@ -30,10 +30,10 @@ sys.path.append(grg_dir)
 from pytorch_pretrained_xbert import AdamW
 from pytorch_pretrained_xbert import WarmupLinearSchedule
 
-from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_visual import update_lr
-from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_visual import update_epoch_loss
-from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_visual import update_step_result
-from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_visual import update_eval_accuracy
+from baseline_cosmosqa_mask.run_mask_roberta_single_attn.util_visual import update_lr
+from baseline_cosmosqa_mask.run_mask_roberta_single_attn.util_visual import update_epoch_loss
+from baseline_cosmosqa_mask.run_mask_roberta_single_attn.util_visual import update_step_result
+from baseline_cosmosqa_mask.run_mask_roberta_single_attn.util_visual import update_eval_accuracy
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',
