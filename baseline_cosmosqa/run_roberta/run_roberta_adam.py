@@ -264,7 +264,7 @@ def main():
         args.model_name_or_path = os.path.join(grg_dir, "pretrained_model/roberta-large")
     elif args.model_choice == "base":
         args.per_gpu_train_batch_size = 4
-        args.per_gpu_eval_batch_size = 8
+        args.per_gpu_eval_batch_size  = 8
         args.model_name_or_path = os.path.join(grg_dir, "pretrained_model/roberta-base")
     else:
         raise ValueError

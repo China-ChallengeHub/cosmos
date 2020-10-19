@@ -49,7 +49,7 @@ def set_seed(args):
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)       # 为当前CPU设置随机种子
-    # torch.cuda.manual_seed(args.seed)  # 为当前GPU设置随机种子
+    torch.cuda.manual_seed(args.seed)  # 为当前GPU设置随机种子
     if args.n_gpu > 0:
         torch.cuda.manual_seed_all(args.seed)  # 为所有GPU设置随机种子
     # torch.backends.cudnn.deterministic = True
@@ -76,8 +76,8 @@ def init_optimizer(args, train_dataloader, model):
     # args.warmup_steps = int(t_total * 0.1)
 
     # debug 3:
-    args.adam_epsilon = 1e-6
-    # args.adam_epsilon = 1e-8
+    # args.adam_epsilon = 1e-6
+    args.adam_epsilon = 1e-8
 
     # debug 4:
     # args.weight_decay = 0.1

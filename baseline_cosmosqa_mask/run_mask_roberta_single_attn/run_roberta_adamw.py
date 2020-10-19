@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import os
 import sys
-import json
 import time
 import torch
 import logging
@@ -60,35 +59,9 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
 
     if args.model_choice == "base":
-        if args.bert_model_choice == "fusion_head":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_base_attn import \
-                RobertaForMultipleChoice_Fusion_Head as RobertaForMultipleChoice
-        elif args.bert_model_choice == "fusion_layer":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_base_attn import \
-                RobertaForMultipleChoice_Fusion_Layer as RobertaForMultipleChoice
-        elif args.bert_model_choice == "fusion_all":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_base_attn import \
-                RobertaForMultipleChoice_Fusion_All as RobertaForMultipleChoice
-        elif args.bert_model_choice == "fusion_head_bert_attn":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_base_attn import \
-                RobertaForMultipleChoice_Fusion_Head_Bert_Self_Attn as RobertaForMultipleChoice
-        else:
-            raise ValueError
+        from baseline_cosmosqa_mask.model.model_mask_roberta_single.model_base import RobertaForMultipleChoice
     elif args.model_choice == "large":
-        if args.bert_model_choice == "fusion_head":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_attn import \
-                RobertaForMultipleChoice_Fusion_Head as RobertaForMultipleChoice
-        elif args.bert_model_choice == "fusion_layer":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_attn import \
-                RobertaForMultipleChoice_Fusion_Layer as RobertaForMultipleChoice
-        elif args.bert_model_choice == "fusion_all":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_attn import \
-                RobertaForMultipleChoice_Fusion_All as RobertaForMultipleChoice
-        elif args.bert_model_choice == "fusion_head_bert_attn":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_attn import \
-                RobertaForMultipleChoice_Fusion_Head_Bert_Self_Attn as RobertaForMultipleChoice
-        else:
-            raise ValueError
+        from baseline_cosmosqa_mask.model.model_mask_roberta_single.model_large import RobertaForMultipleChoice
     else:
         raise ValueError
 

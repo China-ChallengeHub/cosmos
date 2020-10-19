@@ -66,8 +66,23 @@ def init_optimizer(args, train_dataloader, model):
     else:
         t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.num_train_epochs
     args.warmup_steps = int(t_total * 0.1)
-    # args.warmup_steps = 1000
+    args.t_total = t_total
     print("args.warmup_steps = ", args.warmup_steps)
+    print("args.t_total = ", args.t_total)
+    # previous: step 200  0.2764
+
+    # adam_epsilon: 1e-8
+    # torch101: step 200 0.3128
+    # torch110: step 200 0.3039
+    # torch120: step 200 0.2787
+    # adam_epsilon: 1e-6
+    # torch101: step 200 0.2633
+    # torch110: step 200 0.2734
+    # torch120: step 200 0.2673
+    # adam_epsilon: 1e-6
+    # cosmos100: step 200 0.2633
+    # cosmos110: step 200 0.2744
+    # cosmos120: step 200 0.2673
 
     args_path = os.path.join(args.output_dir, "args.json")
     with open(args_path, "w", encoding="utf-8") as writer:

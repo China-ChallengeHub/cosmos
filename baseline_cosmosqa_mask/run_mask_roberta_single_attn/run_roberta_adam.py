@@ -5,7 +5,6 @@ from __future__ import print_function
 import os
 import sys
 import json
-import time
 import torch
 import logging
 
@@ -22,16 +21,16 @@ sys.path.append(grg_dir)
 from pytorch_pretrained_xbert import RobertaConfig
 from pytorch_pretrained_xbert import RobertaTokenizer
 
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.config import parse_args
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.roberta_adamw import train
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.roberta_adamw import set_seed
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.util_feature import read_features
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.roberta_adam import train
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.roberta_adam import set_seed
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.config import parse_args
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_feature import read_features
 
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.util_feature import InputFeatures
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.util_feature import CommonsenseFeatures
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.util_feature import DependencyFeatures
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.util_feature import EntityFeatures
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.util_feature import SentimentFeatures
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_feature import InputFeatures
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_feature import CommonsenseFeatures
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_feature import DependencyFeatures
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_feature import EntityFeatures
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_feature import SentimentFeatures
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',
@@ -52,6 +51,7 @@ def main():
         args.per_gpu_train_batch_size = 3
         args.per_gpu_eval_batch_size = 4
         args.model_name_or_path = os.path.join(grg_dir, "pretrained_model/roberta-base")
+        print("args.per_gpu_train_batch_size = ", args.per_gpu_train_batch_size)
     else:
         raise ValueError
 
@@ -63,34 +63,32 @@ def main():
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
 
+    args_path = os.path.join(args.output_dir, "args.json")
+    with open(args_path, "w", encoding="utf-8") as writer:
+        json.dump(args.__dict__, writer, ensure_ascii=False, indent=4)
+
     if args.model_choice == "base":
-        if args.bert_model_choice == "fix_head":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_base_new import \
-                RobertaForMultipleChoice_Fix_Head as RobertaForMultipleChoice
-        elif args.bert_model_choice == "fusion_all":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_base_new import \
-                RobertaForMultipleChoice_Fusion_All as RobertaForMultipleChoice
-        elif args.bert_model_choice == "fusion_head":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_base_new import \
+        if args.bert_model_choice == "fusion_head":
+            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_base_attn import \
                 RobertaForMultipleChoice_Fusion_Head as RobertaForMultipleChoice
         elif args.bert_model_choice == "fusion_layer":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_base_new import \
+            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_base_attn import \
                 RobertaForMultipleChoice_Fusion_Layer as RobertaForMultipleChoice
+        elif args.bert_model_choice == "fusion_head_bert_attn":
+            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_base_attn import \
+                RobertaForMultipleChoice_Fusion_Head_Bert_Self_Attn as RobertaForMultipleChoice
         else:
             raise ValueError
     elif args.model_choice == "large":
-        if args.bert_model_choice == "fix_head":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_new import \
-                RobertaForMultipleChoice_Fix_Head as RobertaForMultipleChoice
-        elif args.bert_model_choice == "fusion_all":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_new import \
-                RobertaForMultipleChoice_Fusion_All as RobertaForMultipleChoice
-        elif args.bert_model_choice == "fusion_head":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_new import \
+        if args.bert_model_choice == "fusion_head":
+            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_attn import \
                 RobertaForMultipleChoice_Fusion_Head as RobertaForMultipleChoice
         elif args.bert_model_choice == "fusion_layer":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_new import \
+            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_attn import \
                 RobertaForMultipleChoice_Fusion_Layer as RobertaForMultipleChoice
+        elif args.bert_model_choice == "fusion_head_bert_attn":
+            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_attn import \
+                RobertaForMultipleChoice_Fusion_Head_Bert_Self_Attn as RobertaForMultipleChoice
         else:
             raise ValueError
     else:
@@ -107,18 +105,10 @@ def main():
     #                                     config=config)
     model = model_class.from_pretrained(args.model_name_or_path)
 
-    # train_dataset, dev_dataset = read_features(args)
-
-    cached_train_dataset_file = os.path.join(par_dir, "run_mask_roberta_all_attn/train_dataset0_{}.pkl".format(args.max_seq_length))
-    cached_dev_dataset_file   = os.path.join(par_dir, "run_mask_roberta_all_attn/dev_dataset0_{}.pkl".format(args.max_seq_length))
-
-    print("[TIME] --- time: {} ---, load dataset".format(time.ctime(time.time())))
-    train_dataset = torch.load(cached_train_dataset_file)
-    dev_dataset   = torch.load(cached_dev_dataset_file)
+    train_dataset, dev_dataset = read_features(args)
 
     # Training
     if args.do_train:
-        print("[TIME] --- time: {} ---, start train".format(time.ctime(time.time())))
         global_step, tr_loss, best_step = train(args, train_dataset, dev_dataset, model, tokenizer)
         logger.info(" global_step = %s, average loss = %s, best_step = %s", global_step, tr_loss, best_step)
 

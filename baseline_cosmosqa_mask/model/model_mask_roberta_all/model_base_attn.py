@@ -92,9 +92,9 @@ class Trans_Encoder_layer(nn.Module):
 
         enc_slf_attn_list = []
 
-        # batch_size = enc_output.size(0)
-        # seq_len = enc_output.size(1)
-        # hidden_size = enc_output.size(2)
+        batch_size = enc_output.size(0)
+        seq_len = enc_output.size(1)
+        hidden_size = enc_output.size(2)
 
         for idx, enc_layer in enumerate(self.layer_stack):
             _slf_attn_mask = slf_attn_mask[idx]
@@ -106,9 +106,9 @@ class Trans_Encoder_layer(nn.Module):
             if return_attns:
                 enc_slf_attn_list += [enc_slf_attn]
 
-        # enc_output = enc_output.view(-1, hidden_size)
-        # enc_output = self.bn(enc_output)
-        # enc_output = enc_output.view(batch_size, seq_len, hidden_size)
+        enc_output = enc_output.view(-1, hidden_size)
+        enc_output = self.bn(enc_output)
+        enc_output = enc_output.view(batch_size, seq_len, hidden_size)
 
         if return_attns:
             return enc_output, enc_slf_attn_list
@@ -444,12 +444,11 @@ class RobertaForMultipleChoice_Fusion_Layer(BertPreTrainedModel):
 
         # 利用roberta_attn学习参数
         # roberta_attn: (batch_size * choice_num) * seq_len * hidden
-
         # # weight: (batch_size * choice_num) * seq_len * n_layer * layer_size
-        # weight = roberta_attn.view(batch_size, seq_len, self.n_layer, self.layer_size)
+        # weight = roberta_attn.view(batch_size * num_choices, seq_len, self.n_layer, self.layer_size)
         #
         # # weight: n_layer * (batch_size * choice_num) * seq_len * layer_size
-        # weight = weight.permute(2, 1, 0, 3)
+        # weight = weight.transpose(0, 1).permute(2, 1, 0, 3)
         #
         # # weight: n_layer * (batch_size * choice_num) * (seq_len * layer_size)
         # weight = weight.contiguous().view(self.n_layer, batch_size, -1)
@@ -457,14 +456,12 @@ class RobertaForMultipleChoice_Fusion_Layer(BertPreTrainedModel):
         # # weight: n_layer * (batch_size * choice_num) * 4
         # weight = self.linear(weight)
 
-        # mean pooling
-        # weight: (batch_size * choice_num) * 1 * hidden_size
+        # 利用Roberta_attn 的mean pooling学习参数
+        # weight: (batch_size * choice_num) * hidden_size
         weight = torch.sum(roberta_attn, dim=1) / seq_len
 
         # weight: (batch_size * choice_num) * (n_layer * 4)
         weight = self.linear(weight)
-
-        # debug: 可能需要加上一个FC层
 
         # weight: (batch_size * choice_num) * n_layer * 4
         weight = weight.view(batch_size * num_choices, self.n_layer, 4)

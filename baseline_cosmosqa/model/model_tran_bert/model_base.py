@@ -1,36 +1,24 @@
+import os
 import sys
 import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss
 
-sys.path.append("../../../")
-sys.path.append("../../../baseline_cosmosqa_mask")
-sys.path.append("../../../baseline_cosmosqa_mask/run_roberta_transformer")
-sys.path.append("../../../baseline_cosmosqa_mask/run_roberta_transformer/model_transformer")
+cur_path = os.path.abspath(__file__)
+cur_dir  = os.path.dirname(cur_path)
+par_dir  = os.path.dirname(cur_dir)
+gra_dir  = os.path.dirname(par_dir)
+sys.path.append(cur_dir)
+sys.path.append(par_dir)
+sys.path.append(gra_dir)
 
-from baseline_cosmosqa_mask.model.modeling_roberta import RobertaModel
-from baseline_cosmosqa_mask.model.modeling_roberta import BertPreTrainedModel
+from pytorch_pretrained_xbert.modeling_bert import BertModel
+from pytorch_pretrained_xbert.modeling_bert import BertPreTrainedModel
 
-from baseline_cosmosqa_mask.model.model_transformer.Layers import EncoderLayer
-# from baseline_cosmosqa_mask.model_transformer.Models import get_non_pad_mask
-# from baseline_cosmosqa_mask.model_transformer.Models import get_attn_key_pad_mask
-
-
-def get_non_pad_mask(seq):
-    """
-        sequence: [I, love, github, <pad>, <pad>]
-        padding_mask: [1, 1, 1, 0, 0]
-        padding_mask:
-        [
-            [1],
-            [1],
-            [1],
-            [0],
-            [0]
-        ]
-    """
-    assert seq.dim() == 2
-    return seq.ne(1).type(torch.float).unsqueeze(-1)
+from baseline_cosmosqa.model.model_transformer import Constants
+from baseline_cosmosqa.model.model_transformer.Layers import EncoderLayer
+from baseline_cosmosqa.model.model_transformer.Models import get_non_pad_mask
+from baseline_cosmosqa.model.model_transformer.Models import get_attn_key_pad_mask
 
 
 class Trans_Encoder(nn.Module):
@@ -83,11 +71,11 @@ class BertPooler(nn.Module):
         return pooled_output
 
 
-class RobertaForMultipleChoice(BertPreTrainedModel):
+class BertForMultipleChoice(BertPreTrainedModel):
     def __init__(self, config):
-        super(RobertaForMultipleChoice, self).__init__(config)
+        super(BertForMultipleChoice, self).__init__(config)
 
-        self.roberta = RobertaModel(config)
+        self.bert = BertModel(config)
         self.transformer_mrc = Trans_Encoder(n_layers=3,
                                              n_head=12,
                                              d_k=64,
@@ -96,7 +84,6 @@ class RobertaForMultipleChoice(BertPreTrainedModel):
                                              d_inner=3072,
                                              dropout=0.1)
 
-        self.n_head = 12
         self.pooler = BertPooler(config)
 
         self.bn = torch.nn.BatchNorm1d(num_features=config.hidden_size)
@@ -109,57 +96,50 @@ class RobertaForMultipleChoice(BertPreTrainedModel):
                 input_ids,
                 token_type_ids=None,
                 attention_mask=None,
-
-                prior_mask=None,
-
                 labels=None):
-
-        # input_ids:        batch_size * choice_num * seq_len
-        # token_type_ids:   batch_size * choice_num * seq_len
-        # attention_mask:   batch_size * choice_num * seq_len
-        # commonsense_mask: batch_size * choice_num * seq_len * seq_len
-
-        # flat_input_ids:        (batch_size * choice_num) * seq_len
-        # flat_token_type_ids:   (batch_size * choice_num) * seq_len
-        # flat_attention_mask:   (batch_size * choice_num) * seq_len
-        # flat_commonsense_mask: (batch_size * choice_num) * seq_len * seq_len
 
         batch_size  = input_ids.shape[0]
         num_choices = input_ids.shape[1]
         seq_len     = input_ids.shape[2]
 
-        flat_input_ids        = input_ids.view(-1, input_ids.size(-1))
-        flat_token_type_ids   = None
-        flat_attention_mask   = attention_mask.view(-1, attention_mask.size(-1))
-        flat_prior_mask       = prior_mask.view(-1, seq_len, seq_len)
-        flat_position_ids     = None
-        flat_head_mask        = None
+        # input_ids:      batch_size * choice_num * seq_len
+        # token_type_ids: batch_size * choice_num * seq_len
+        # attention_mask: batch_size * choice_num * seq_len
+        # entity_mask:    batch_size * choice_num * seq_len
 
-        # roberta_attn:  (batch_size * choice_num) * seq_len * hidden_size
-        # pooled_output: (batch_size * choice_num) * hidden_size
-        roberta_attn, pooled_output = self.roberta(input_ids=flat_input_ids,
-                                                   token_type_ids=flat_token_type_ids,
-                                                   attention_mask=flat_attention_mask,
-                                                   position_ids=flat_position_ids,
-                                                   head_mask=flat_head_mask)
+        # flat_input_ids:      (batch_size * choice_num) * seq_len
+        # flat_token_type_ids: (batch_size * choice_num) * seq_len
+        # flat_attention_mask: (batch_size * choice_num) * seq_len
+        # flat_entity_mask:    (batch_size * choice_num) * seq_len
+
+        flat_input_ids       = input_ids.view(-1, input_ids.size(-1))
+        flat_token_type_ids  = token_type_ids.view(-1, token_type_ids.size(-1))
+        flat_attention_mask  = attention_mask.view(-1, attention_mask.size(-1))
+        flat_position_ids    = None
+        flat_head_mask       = None
+
+        # bert_attn:     (batch_size * choice_num) * seq_len * hidden
+        # pooled_output: (batch_size * choice_num) * hidden
+        bert_attn, pooled_output = self.bert(input_ids=flat_input_ids,
+                                             token_type_ids=flat_token_type_ids,
+                                             attention_mask=flat_attention_mask,
+                                             position_ids=flat_position_ids,
+                                             head_mask=flat_head_mask)
 
         # -- Prepare masks
-        # non_pad_mask:  (batch_size * choice_num) * seq_len *    1
-        non_pad_mask = get_non_pad_mask(flat_input_ids)
-        non_pad_mask = non_pad_mask.float()
-
+        # non_pad_mask:  (batch_size * choice_num) * seq_len * 1
         # slf_attn_mask: (batch_size * choice_num) * seq_len * seq_len
-        slf_attn_mask = flat_prior_mask
+        non_pad_mask  = get_non_pad_mask(flat_input_ids)
+        slf_attn_mask = get_attn_key_pad_mask(seq_k=flat_input_ids, seq_q=flat_input_ids)
+        tran_attn = self.transformer_mrc(enc_output=bert_attn,
+                                         non_pad_mask=non_pad_mask.float(),
+                                         slf_attn_mask=slf_attn_mask.byte())
 
-        # slf_attn_mask: (batch_size * choice_num * n_head) * seq_len * seq_len
-        slf_attn_mask = slf_attn_mask.repeat(self.n_head, 1, 1)
+        # Debug: pooled_output分类器并非取自sequence_output[:, 0]
+        # sequence_output = bert_attn + tran_attn
+        # pooled_output = sequence_output[:, 0]
 
-        slf_attn_mask = slf_attn_mask.byte()
-        tran_attn = self.transformer_mrc(enc_output=roberta_attn,
-                                         non_pad_mask=non_pad_mask,
-                                         slf_attn_mask=slf_attn_mask)
-
-        sequence_output = roberta_attn + tran_attn
+        sequence_output = bert_attn + tran_attn
         pooled_output = self.pooler(sequence_output)
 
         pooled_output = self.bn(pooled_output)

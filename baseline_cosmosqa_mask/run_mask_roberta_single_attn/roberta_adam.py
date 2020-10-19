@@ -25,10 +25,10 @@ sys.path.append(par_dir)
 sys.path.append(gra_dir)
 sys.path.append(grg_dir)
 
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.util_visual import update_lr
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.util_visual import update_epoch_loss
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.util_visual import update_step_result
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.util_visual import update_eval_accuracy
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_visual import update_lr
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_visual import update_epoch_loss
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_visual import update_step_result
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_visual import update_eval_accuracy
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',

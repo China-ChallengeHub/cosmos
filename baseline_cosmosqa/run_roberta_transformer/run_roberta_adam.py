@@ -372,7 +372,7 @@ def main():
     args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
     args.eval_batch_size  = args.per_gpu_eval_batch_size  * max(1, args.n_gpu)
     print("args.train_batch_size = ", args.train_batch_size)
-    print("args.eval_batch_size = ", args.eval_batch_size)
+    print("args.eval_batch_size = ",  args.eval_batch_size)
 
     # if os.path.exists(args.output_dir) and os.listdir(args.output_dir):
     #     raise ValueError("Output directory ({}) already exists and is not empty.".format(args.output_dir))

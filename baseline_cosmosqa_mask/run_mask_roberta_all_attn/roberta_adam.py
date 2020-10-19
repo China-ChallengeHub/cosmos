@@ -93,7 +93,6 @@ def train(args, train_dataset, dev_dataset, model, tokenizer):
                       'entity_mask':      batch[5].long(),
                       'sentiment_mask':   batch[6].long(),
                       'labels':           batch[7]}
-            print("inputs keys = ", inputs.keys())
             outputs = model(**inputs)
             loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
 

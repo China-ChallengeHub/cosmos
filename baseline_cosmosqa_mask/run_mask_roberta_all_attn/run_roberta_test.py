@@ -64,6 +64,8 @@ def main():
             from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_base_attn import \
                 RobertaForMultipleChoice_Fusion_Head as RobertaForMultipleChoice
         elif args.bert_model_choice == "fusion_layer":
+            print("model = fusion layer")
+            print("roberta model = roberta base")
             from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_base_attn import \
                 RobertaForMultipleChoice_Fusion_Layer as RobertaForMultipleChoice
         elif args.bert_model_choice == "fusion_all":
@@ -82,7 +84,7 @@ def main():
             from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_attn import \
                 RobertaForMultipleChoice_Fusion_Layer as RobertaForMultipleChoice
         elif args.bert_model_choice == "fusion_all":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_base_attn import \
+            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_attn import \
                 RobertaForMultipleChoice_Fusion_All as RobertaForMultipleChoice
         elif args.bert_model_choice == "fusion_head_bert_attn":
             from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_attn import \

@@ -94,29 +94,25 @@ def convert(features, features_commonsense, features_dependency, features_entity
         assert feature.example_id == feature_commonsense.example_id == feature_dependency.example_id \
                == feature_entity.example_id == feature_sentiment.example_id
 
-    print("[TIME] --- time: {} ---, convert dependency features".format(time.ctime(time.time())))
     # Convert to Tensors and build dataset
     all_input_ids   = torch.tensor(select_field(features, 'input_ids'),   dtype=torch.long)
     all_input_mask  = torch.tensor(select_field(features, 'input_mask'),  dtype=torch.long)
     all_segment_ids = torch.tensor(select_field(features, 'segment_ids'), dtype=torch.long)
     all_label_ids   = torch.tensor([f.label for f in features], dtype=torch.long)
-
-    print("[TIME] --- time: {} ---, convert commmonsense mask".format(time.ctime(time.time())))
     all_commonsense_mask = torch.tensor(select_field(features_commonsense, 'commonsense_mask'), dtype=torch.int8)
-
-    print("[TIME] --- time: {} ---, convert dependency mask".format(time.ctime(time.time())))
-    all_dependency_mask = torch.tensor(select_field(features_dependency, 'dependency_mask'), dtype=torch.int8)
-
-    print("[TIME] --- time: {} ---, convert entity mask".format(time.ctime(time.time())))
-    all_entity_mask = torch.tensor(select_field(features_entity, 'entity_mask'), dtype=torch.int8)
-
-    print("[TIME] --- time: {} ---, convert sentiment mask".format(time.ctime(time.time())))
-    all_sentiment_mask = torch.tensor(select_field(features_sentiment, 'sentiment_mask'), dtype=torch.int8)
+    all_dependency_mask  = torch.tensor(select_field(features_dependency,   'dependency_mask'), dtype=torch.int8)
+    all_entity_mask      = torch.tensor(select_field(features_entity,           'entity_mask'), dtype=torch.int8)
+    all_sentiment_mask   = torch.tensor(select_field(features_sentiment,     'sentiment_mask'), dtype=torch.int8)
 
     print("[TIME] --- time: {} ---, convert TensorDataset".format(time.ctime(time.time())))
-    dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids,
-                            all_commonsense_mask, all_dependency_mask,
-                            all_entity_mask, all_sentiment_mask, all_label_ids)
+    dataset = TensorDataset(all_input_ids,
+                            all_input_mask,
+                            all_segment_ids,
+                            all_commonsense_mask,
+                            all_dependency_mask,
+                            all_entity_mask,
+                            all_sentiment_mask,
+                            all_label_ids)
     return dataset
 
 
@@ -184,21 +180,33 @@ def _read_features(args):
 
     if args.debug:
         _train_features = (
-            train_features_commonsense[:31], train_features_dependency[:31], train_features_entity[:31],
-            train_features_sentiment[:31], train_features[:31]
+            train_features_commonsense[:31],
+            train_features_dependency[:31],
+            train_features_entity[:31],
+            train_features_sentiment[:31],
+            train_features[:31]
         )
         _dev_features = (
-            dev_features_commonsense[:31], dev_features_dependency[:31], dev_features_entity[:31],
-            dev_features_sentiment[:31], dev_features[:31]
+            dev_features_commonsense[:31],
+            dev_features_dependency[:31],
+            dev_features_entity[:31],
+            dev_features_sentiment[:31],
+            dev_features[:31]
         )
     else:
         _train_features = (
-            train_features_commonsense, train_features_dependency, train_features_entity,
-            train_features_sentiment, train_features
+            train_features_commonsense,
+            train_features_dependency,
+            train_features_entity,
+            train_features_sentiment,
+            train_features
         )
         _dev_features = (
-            dev_features_commonsense, dev_features_dependency, dev_features_entity,
-            dev_features_sentiment, dev_features
+            dev_features_commonsense,
+            dev_features_dependency,
+            dev_features_entity,
+            dev_features_sentiment,
+            dev_features
         )
 
     return _train_features, _dev_features
@@ -210,16 +218,27 @@ def read_features(args):
         _train_features, _dev_features = _read_features(args)
 
         train_features_commonsense, train_features_dependency, train_features_entity, train_features_sentiment, train_features = _train_features
-        dev_features_commonsense, dev_features_dependency, dev_features_entity, dev_features_sentiment, dev_features = _dev_features
+        dev_features_commonsense,   dev_features_dependency,   dev_features_entity,   dev_features_sentiment,   dev_features   = _dev_features
 
-        train_dataset = convert(train_features, train_features_commonsense, train_features_dependency,
-                                train_features_entity, train_features_sentiment)
-        dev_dataset = convert(dev_features, dev_features_commonsense, dev_features_dependency,
-                              dev_features_entity, dev_features_sentiment)
+        train_dataset = convert(features=train_features,
+                                features_commonsense=train_features_commonsense,
+                                features_dependency=train_features_dependency,
+                                features_entity=train_features_entity,
+                                features_sentiment=train_features_sentiment)
+
+        dev_dataset = convert(features=dev_features,
+                              features_commonsense=dev_features_commonsense,
+                              features_dependency=dev_features_dependency,
+                              features_entity=dev_features_entity,
+                              features_sentiment=dev_features_sentiment)
 
     else:
         cached_train_dataset_file = "./train_dataset0_{}.pkl".format(args.max_seq_length)
-        cached_dev_dataset_file = "./dev_dataset0_{}.pkl".format(args.max_seq_length)
+        cached_dev_dataset_file   = "./dev_dataset0_{}.pkl".format(args.max_seq_length)
+        # cached_train_dataset_file = "./train_dataset_{}.pkl".format(args.max_seq_length)
+        # cached_dev_dataset_file   = "./dev_dataset_{}.pkl".format(args.max_seq_length)
+        print("train_dataset_file = ", cached_train_dataset_file)
+        print("dev_dataset_file = ",   cached_dev_dataset_file)
 
         try:
             print("[TIME] --- time: {} ---, load dataset".format(time.ctime(time.time())))
@@ -230,15 +249,22 @@ def read_features(args):
             _train_features, _dev_features = _read_features(args)
 
             train_features_commonsense, train_features_dependency, train_features_entity, train_features_sentiment, train_features = _train_features
-            dev_features_commonsense, dev_features_dependency, dev_features_entity, dev_features_sentiment, dev_features = _dev_features
+            dev_features_commonsense,   dev_features_dependency,   dev_features_entity,   dev_features_sentiment,   dev_features   = _dev_features
 
             print("[TIME] --- time: {} ---, convert dataset".format(time.ctime(time.time())))
-            train_dataset = convert(train_features, train_features_commonsense, train_features_dependency,
-                                    train_features_entity, train_features_sentiment)
-            dev_dataset = convert(dev_features, dev_features_commonsense, dev_features_dependency,
-                                  dev_features_entity, dev_features_sentiment)
+            train_dataset = convert(features=train_features,
+                                    features_commonsense=train_features_commonsense,
+                                    features_dependency=train_features_dependency,
+                                    features_entity=train_features_entity,
+                                    features_sentiment=train_features_sentiment)
+
+            dev_dataset = convert(features=dev_features,
+                                  features_commonsense=dev_features_commonsense,
+                                  features_dependency=dev_features_dependency,
+                                  features_entity=dev_features_entity,
+                                  features_sentiment=dev_features_sentiment)
 
             torch.save(train_dataset, cached_train_dataset_file)
-            torch.save(dev_dataset, cached_dev_dataset_file)
+            torch.save(dev_dataset,   cached_dev_dataset_file)
 
     return train_dataset, dev_dataset

@@ -1,4 +1,6 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import os
 import sys
@@ -28,10 +30,10 @@ sys.path.append(grg_dir)
 from pytorch_pretrained_xbert import AdamW
 from pytorch_pretrained_xbert import WarmupLinearSchedule
 
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.util_visual import update_lr
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.util_visual import update_epoch_loss
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.util_visual import update_step_result
-from baseline_cosmosqa_mask.run_mask_roberta_all_new.util_visual import update_eval_accuracy
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_visual import update_lr
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_visual import update_epoch_loss
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_visual import update_step_result
+from baseline_cosmosqa_mask.run_mask_roberta_all_attn.util_visual import update_eval_accuracy
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',
@@ -46,9 +48,12 @@ def simple_accuracy(preds, labels):
 def set_seed(args):
     random.seed(args.seed)
     np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
+    torch.manual_seed(args.seed)       # 为当前CPU设置随机种子
+    torch.cuda.manual_seed(args.seed)  # 为当前GPU设置随机种子
     if args.n_gpu > 0:
-        torch.cuda.manual_seed_all(args.seed)
+        torch.cuda.manual_seed_all(args.seed)  # 为所有GPU设置随机种子
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark     = False
 
 
 def init_optimizer(args, train_dataloader, model):
@@ -58,11 +63,31 @@ def init_optimizer(args, train_dataloader, model):
     else:
         t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.num_train_epochs
 
-    if args.warmup_steps == 1:
-        args.warmup_steps = int(t_total * 0.1)
-    else:
-        args.warmup_steps = 0
-    print("args.warmup_steps = ", args.warmup_steps)
+    # debug 2:
+    args.t_total = t_total
+    args.warmup_steps = 0
+    # args.warmup_steps = 1000
+    # args.warmup_steps = 1500
+    # args.warmup_steps = int(t_total * 0.1)
+
+    # debug 3:
+    # args.adam_epsilon = 1e-6
+    args.adam_epsilon = 1e-8
+
+    # debug 4:
+    args.weight_decay = 0.01
+
+    # debug 5:
+    # args.learning_rate = 5e-6
+    args.learning_rate = 1e-5
+    # args.learning_rate = 2e-5
+
+    print("args.num_train_epochs = ", args.num_train_epochs)
+    print("args.t_total = ",          args.t_total)
+    print("args.warmup_steps = ",     args.warmup_steps)
+    print("args.adam_epsilon = ",     args.adam_epsilon)
+    print("args.weight_decay = ",     args.weight_decay)
+    print("args.learning_rate = ",    args.learning_rate)
 
     args_path = os.path.join(args.output_dir, "args.json")
     with open(args_path, "w", encoding="utf-8") as writer:
@@ -71,7 +96,7 @@ def init_optimizer(args, train_dataloader, model):
     # Prepare optimizer and schedule (linear warmup and decay)
     no_decay = ['bias', 'LayerNorm.weight']
     optimizer_grouped_parameters = [
-        {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)], 'weight_decay': 0.01},
+        {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)], 'weight_decay': args.weight_decay},
         {'params': [p for n, p in model.named_parameters() if     any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
     ]
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
@@ -81,14 +106,7 @@ def init_optimizer(args, train_dataloader, model):
     # multi-gpu training (should be after apex fp16 initialization)
     if args.n_gpu > 1:
         gpu_ids = list(range(args.n_gpu))
-        print("gpu_ids = ", gpu_ids)
         model = torch.nn.DataParallel(model, device_ids=gpu_ids)
-
-    # # Distributed training (should be after apex fp16 initialization)
-    # if args.local_rank != -1:
-    #     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.local_rank],
-    #                                                       output_device=args.local_rank,
-    #                                                       find_unused_parameters=True)
 
     return model, optimizer, scheduler, t_total
 
@@ -99,17 +117,6 @@ def train(args, train_dataset, dev_dataset, model, tokenizer):
     train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size)
 
     model, optimizer, scheduler, t_total = init_optimizer(args, train_dataloader, model)
-
-    # Train!
-    # logger.info("***** Running training *****")
-    # logger.info("  Num examples = %d", len(train_dataset))
-    # logger.info("  Num Epochs = %d", args.num_train_epochs)
-    # logger.info("  Instantaneous batch size per GPU = %d", args.per_gpu_train_batch_size)
-    # logger.info("  Total train batch size (w. parallel, distributed & accumulation) = %d",
-    #             args.train_batch_size * args.gradient_accumulation_steps * (
-    #             torch.distributed.get_world_size() if args.local_rank != -1 else 1))
-    # logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
-    # logger.info("  Total optimization steps = %d", t_total)
 
     tr_step, global_step = 0, 0
     tr_loss, logging_loss = 0.0, 0.0
@@ -128,12 +135,11 @@ def train(args, train_dataset, dev_dataset, model, tokenizer):
             inputs = {'input_ids':        batch[0],
                       'attention_mask':   batch[1],
                       'token_type_ids':   batch[2],
-                      'commonsense_mask': batch[3].long(),
-                      'dependency_mask':  batch[4].long(),
-                      'entity_mask':      batch[5].long(),
-                      'sentiment_mask':   batch[6].long(),
+                      'prior_mask':       batch[3].long(),
+                      # 'prior_mask':       batch[4].long(),
+                      # 'prior_mask':       batch[5].long(),
+                      # 'prior_mask':       batch[6].long(),
                       'labels':           batch[7]}
-            # print("inputs keys = ", inputs.keys())
             outputs = model(**inputs)
             loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
 
@@ -151,7 +157,6 @@ def train(args, train_dataset, dev_dataset, model, tokenizer):
             epoch_step += 1
 
             if (step + 1) % args.gradient_accumulation_steps == 0:
-                # torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
                 optimizer.step()
                 scheduler.step()  # Update learning rate schedule
                 model.zero_grad()
@@ -251,10 +256,10 @@ def eval(args, model, eval_dataset, prefix="", test=False):
             inputs = {'input_ids':        batch[0],
                       'attention_mask':   batch[1],
                       'token_type_ids':   batch[2],
-                      'commonsense_mask': batch[3].long(),
-                      'dependency_mask':  batch[4].long(),
-                      'entity_mask':      batch[5].long(),
-                      'sentiment_mask':   batch[6].long(),
+                      'prior_mask':       batch[3].long(),
+                      # 'prior_mask':       batch[4].long(),
+                      # 'prior_mask':       batch[5].long(),
+                      # 'prior_mask':       batch[6].long(),
                       'labels':           batch[7]}
 
             outputs = model(**inputs)
@@ -275,18 +280,4 @@ def eval(args, model, eval_dataset, prefix="", test=False):
     result = {"eval_acc": acc, "eval_loss": eval_loss}
     results.update(result)
 
-    # output_eval_file = os.path.join(eval_output_dir, "is_test_" + str(test).lower() + "_eval_results.txt")
-    #
-    # with open(output_eval_file, "w") as writer:
-    #     logger.info("***** Eval results {} *****".format(str(prefix) + " is test:" + str(test)))
-    #     writer.write("model           =%s\n" % str(args.model_name_or_path))
-    #     writer.write("total batch size=%d\n" % (args.per_gpu_train_batch_size * args.gradient_accumulation_steps *
-    #                                             (torch.distributed.get_world_size()
-    #                                              if args.local_rank != -1 else 1)))
-    #     writer.write("train num epochs=%d\n" % args.num_train_epochs)
-    #     writer.write("fp16            =%s\n" % args.fp16)
-    #     writer.write("max seq length  =%d\n" % args.max_seq_length)
-    #     for key in sorted(result.keys()):
-    #         logger.info("  %s = %s", key, str(result[key]))
-    #         writer.write("%s = %s\n" % (key, str(result[key])))
     return results
