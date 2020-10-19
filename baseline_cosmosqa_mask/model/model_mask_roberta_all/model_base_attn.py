@@ -102,7 +102,7 @@ class Trans_Encoder_layer(nn.Module):
             enc_output, enc_slf_attn = enc_layer(
                 enc_output,
                 non_pad_mask=non_pad_mask,
-                slf_attn_mask=_slf_attn_mask.byte())
+                slf_attn_mask=_slf_attn_mask)
             if return_attns:
                 enc_slf_attn_list += [enc_slf_attn]
 
@@ -458,6 +458,7 @@ class RobertaForMultipleChoice_Fusion_Layer(BertPreTrainedModel):
 
         # 利用Roberta_attn 的mean pooling学习参数
         # weight: (batch_size * choice_num) * hidden_size
+
         weight = torch.sum(roberta_attn, dim=1) / seq_len
 
         # weight: (batch_size * choice_num) * (n_layer * 4)
@@ -475,14 +476,19 @@ class RobertaForMultipleChoice_Fusion_Layer(BertPreTrainedModel):
 
         # weight: n_layer * (batch_size * choice_num) * 4 * 1 * 1
         weight = weight.unsqueeze(-1).unsqueeze(-1)
+        if   torch.get_default_dtype() == torch.float32: weight = weight.float()
+        elif torch.get_default_dtype() == torch.float64: weight = weight.double()
+        else: raise TypeError
 
         # flat_mask: (batch_size * choice_num) * 4 * seq_len * seq_len
-        flat_mask = torch.cat(
-            [flat_commonsense_mask, flat_dependency_mask, flat_entity_mask, flat_sentiment_mask], dim=1)
+        flat_mask = torch.cat([flat_commonsense_mask, flat_dependency_mask, flat_entity_mask, flat_sentiment_mask], dim=1)
+        if   torch.get_default_dtype() == torch.float32: flat_mask = flat_mask.float()
+        elif torch.get_default_dtype() == torch.float64: flat_mask = flat_mask.double()
+        else: raise TypeError
 
         # flat_mask: n_layer * (batch_size * choice_num) * 4 * seq_len * seq_len
         flat_mask = flat_mask.unsqueeze(0).repeat(self.n_layer, 1, 1, 1, 1)
-        flat_mask = torch.mul(weight.float(), flat_mask.float())
+        flat_mask = torch.mul(weight, flat_mask)
 
         # slf_attn_mask: n_layer * (batch_size * choice_num) * seq_len * seq_len
         slf_attn_mask = torch.sum(flat_mask, dim=2)
@@ -494,7 +500,9 @@ class RobertaForMultipleChoice_Fusion_Layer(BertPreTrainedModel):
         # non_pad_mask:  (batch_size * choice_num) * seq_len * 1
         # slf_attn_mask: (batch_size * choice_num) * seq_len * seq_len
         non_pad_mask = get_non_pad_mask(flat_input_ids)
-        non_pad_mask = non_pad_mask.float()
+        if   torch.get_default_dtype() == torch.float32: non_pad_mask = non_pad_mask.float()
+        elif torch.get_default_dtype() == torch.float64: non_pad_mask = non_pad_mask.double()
+        else: raise TypeError
 
         # slf_attn_mask: n_layer * (batch_size * choice_num * n_head) * seq_len * seq_len
         slf_attn_mask = slf_attn_mask.view(self.n_layer, -1, seq_len, seq_len)

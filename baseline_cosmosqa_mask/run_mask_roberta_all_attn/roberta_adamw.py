@@ -50,6 +50,11 @@ def set_seed(args):
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)       # 为当前CPU设置随机种子
     torch.cuda.manual_seed(args.seed)  # 为当前GPU设置随机种子
+
+    # set default tensor type
+    # torch.set_default_tensor_type(torch.cuda.DoubleTensor)
+    torch.set_default_tensor_type(torch.cuda.FloatTensor)
+
     if args.n_gpu > 0:
         torch.cuda.manual_seed_all(args.seed)  # 为所有GPU设置随机种子
     # torch.backends.cudnn.deterministic = True
@@ -77,7 +82,9 @@ def init_optimizer(args, train_dataloader, model):
 
     # debug 3:
     # args.adam_epsilon = 1e-6
-    args.adam_epsilon = 1e-8
+    args.adam_epsilon = 1e-7
+    # args.adam_epsilon = 1e-8
+    # args.adam_epsilon = 1e-9
 
     # debug 4:
     # args.weight_decay = 0.1
@@ -130,9 +137,9 @@ def init_optimizer(args, train_dataloader, model):
     return model, optimizer, scheduler, t_total
 
 
-def train(args, train_dataset, dev_dataset, model, tokenizer):
+def train(args, train_dataset, dev_dataset, model):
     """ Train the model """
-    train_sampler = RandomSampler(train_dataset) if args.local_rank == -1 else DistributedSampler(train_dataset)
+    train_sampler    = RandomSampler(train_dataset)
     train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size)
 
     model, optimizer, scheduler, t_total = init_optimizer(args, train_dataloader, model)
@@ -144,6 +151,7 @@ def train(args, train_dataset, dev_dataset, model, tokenizer):
     model.zero_grad()
     train_iterator = trange(int(args.num_train_epochs), desc="Epoch", disable=args.local_rank not in [-1, 0])
     set_seed(args)  # Added here for reproductibility (even between python 2 and 3)
+
     for epoch in train_iterator:
         epoch_step, epoch_loss = 0, 0.0
         epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
@@ -176,20 +184,18 @@ def train(args, train_dataset, dev_dataset, model, tokenizer):
             epoch_step += 1
 
             if (step + 1) % args.gradient_accumulation_steps == 0:
-                # debug 7: gradient clip
-                # torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
                 optimizer.step()
                 scheduler.step()  # Update learning rate schedule
                 model.zero_grad()
 
                 lr_this_step = scheduler.get_lr()[0]
                 update_lr(lr_this_step, global_step)
-                # print("lr_this_step = ", lr_this_step)
 
                 assert args.logging_steps == args.save_steps
                 if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0:
                     # Save model checkpoint
-                    results = eval(args, model, dev_dataset, prefix="", test=False)
+                    results = eval(args, model, dev_dataset)
+                    results["learning_rate"] = lr_this_step
 
                     # TODO add visdom visualization
                     eval_loss = results["eval_loss"]
@@ -222,12 +228,18 @@ def train(args, train_dataset, dev_dataset, model, tokenizer):
                 break
 
         # TODO trian and evaluate
-        results = eval(args, model, dev_dataset, prefix="", test=False)
+        lr_this_step = scheduler.get_lr()[0]
+        update_lr(lr_this_step, global_step)
+
+        results = eval(args, model, dev_dataset)
+        results["learning_rate"] = lr_this_step
+
         train_loss = epoch_loss / epoch_step
         eval_loss = results["eval_loss"]
         eval_accu = results["eval_acc"]
         update_epoch_loss(train_loss, eval_loss, epoch)
         update_eval_accuracy(eval_accu, epoch)
+
         if eval_accu > best_dev_acc:
             best_dev_acc  = eval_accu
             best_dev_loss = eval_loss
@@ -252,19 +264,11 @@ def train(args, train_dataset, dev_dataset, model, tokenizer):
     return global_step, tr_loss / global_step, best_step
 
 
-def eval(args, model, eval_dataset, prefix="", test=False):
-    eval_task_names = (args.task_name,)
-    eval_output_dir = args.output_dir
-
+def eval(args, model, eval_dataset):
     results = {}
-    # Note that DistributedSampler samples randomly
-    eval_sampler = SequentialSampler(eval_dataset) if args.local_rank == -1 else DistributedSampler(eval_dataset)
+    eval_sampler    = SequentialSampler(eval_dataset)
     eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
 
-    # Eval!
-    # logger.info("***** Running evaluation {} *****".format(prefix))
-    # logger.info("  Num examples = %d", len(eval_dataset))
-    # logger.info("  Batch size = %d", args.eval_batch_size)
     eval_loss = 0.0
     nb_eval_steps = 0
     preds = None
@@ -302,18 +306,4 @@ def eval(args, model, eval_dataset, prefix="", test=False):
     result = {"eval_acc": acc, "eval_loss": eval_loss}
     results.update(result)
 
-    # output_eval_file = os.path.join(eval_output_dir, "is_test_" + str(test).lower() + "_eval_results.txt")
-    #
-    # with open(output_eval_file, "w") as writer:
-    #     logger.info("***** Eval results {} *****".format(str(prefix) + " is test:" + str(test)))
-    #     writer.write("model           =%s\n" % str(args.model_name_or_path))
-    #     writer.write("total batch size=%d\n" % (args.per_gpu_train_batch_size * args.gradient_accumulation_steps *
-    #                                             (torch.distributed.get_world_size()
-    #                                              if args.local_rank != -1 else 1)))
-    #     writer.write("train num epochs=%d\n" % args.num_train_epochs)
-    #     writer.write("fp16            =%s\n" % args.fp16)
-    #     writer.write("max seq length  =%d\n" % args.max_seq_length)
-    #     for key in sorted(result.keys()):
-    #         logger.info("  %s = %s", key, str(result[key]))
-    #         writer.write("%s = %s\n" % (key, str(result[key])))
     return results

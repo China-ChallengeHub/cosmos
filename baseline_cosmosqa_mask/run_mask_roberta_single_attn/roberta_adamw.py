@@ -135,8 +135,8 @@ def train(args, train_dataset, dev_dataset, model, tokenizer):
             inputs = {'input_ids':        batch[0],
                       'attention_mask':   batch[1],
                       'token_type_ids':   batch[2],
-                      'prior_mask':       batch[3].long(),
-                      # 'prior_mask':       batch[4].long(),
+                      # 'prior_mask':       batch[3].long(),
+                      'prior_mask':       batch[4].long(),
                       # 'prior_mask':       batch[5].long(),
                       # 'prior_mask':       batch[6].long(),
                       'labels':           batch[7]}
@@ -256,8 +256,8 @@ def eval(args, model, eval_dataset, prefix="", test=False):
             inputs = {'input_ids':        batch[0],
                       'attention_mask':   batch[1],
                       'token_type_ids':   batch[2],
-                      'prior_mask':       batch[3].long(),
-                      # 'prior_mask':       batch[4].long(),
+                      # 'prior_mask':       batch[3].long(),
+                      'prior_mask':       batch[4].long(),
                       # 'prior_mask':       batch[5].long(),
                       # 'prior_mask':       batch[6].long(),
                       'labels':           batch[7]}

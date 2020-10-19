@@ -25,8 +25,6 @@ class ScaledDotProductAttention(nn.Module):
 
         if mask is not None:
             # attn = attn.masked_fill(mask, -np.inf)
-
-            mask = mask.float()
             attn = attn.mul(mask)
 
             # debug: 绝不可添加mask.byte()

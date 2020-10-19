@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import os
 import sys
-import json
 import time
 import torch
 import logging
@@ -95,9 +94,7 @@ def main():
     config_class, model_class, tokenizer_class = RobertaConfig, RobertaForMultipleChoice, RobertaTokenizer
     config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path,
                                           num_labels=4, finetuning_task=args.task_name)
-
     tokenizer = tokenizer_class.from_pretrained(args.model_name_or_path, do_lower_case=args.do_lower_case)
-
     # model = model_class.from_pretrained(args.model_name_or_path,
     #                                     from_tf=bool('.ckpt' in args.model_name_or_path),
     #                                     config=config)
@@ -108,7 +105,7 @@ def main():
     # Training
     if args.do_train:
         print("[TIME] --- time: {} ---, start train".format(time.ctime(time.time())))
-        global_step, tr_loss, best_step = train(args, train_dataset, dev_dataset, model, tokenizer)
+        global_step, tr_loss, best_step = train(args, train_dataset, dev_dataset, model)
         logger.info(" global_step = %s, average loss = %s, best_step = %s", global_step, tr_loss, best_step)
 
 
