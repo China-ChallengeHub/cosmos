@@ -8,18 +8,15 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 python3 run_roberta_adamw.py \
     --max_seq_length=256 \
     --logging_steps=200 \
     --save_steps=200 \
-<<<<<<< HEAD
     --output_dir=../../checkpoint/fusion/attn/weight_decay_0.01/adam_epsilon_1e-6/output_base_lr_1e-5_bz_12_epoch_5_adamw_warmup_step_1000_fusion_layer_256_nobyte
 #    --output_dir=../../checkpoint/fusion/attn/weight_decay_0.01/adam_epsilon_1e-6/output_base_lr_2e-5_bz_12_epoch_5_adamw_warmup_step_0_fusion_layer_256_nobyte
 #    --output_dir=../../checkpoint/fusion/attn/weight_decay_0.01/adam_epsilon_1e-6/output_base_lr_1e-5_bz_12_epoch_5_adamw_warmup_step_0_fusion_layer_256_nobyte
 #    --output_dir=../../checkpoint/fusion/attn/weight_decay_0.01/adam_epsilon_1e-8/output_base_lr_1e-5_bz_12_epoch_5_adamw_warmup_step_0_fusion_layer_256_nobyte
-=======
-    --output_dir=../../checkpoint/fusion/attn/weight_decay_0.01/adam_epsilon_1e-8/output_base_lr_1e-5_bz_12_epoch_5_adamw_warmup_step_0_fusion_layer_256_nobyte
+#    --output_dir=../../checkpoint/fusion/attn/weight_decay_0.01/adam_epsilon_1e-8/output_base_lr_1e-5_bz_12_epoch_5_adamw_warmup_step_0_fusion_layer_256_nobyte
 #    --output_dir=../../checkpoint/fusion/attn/debug
 #    --output_dir=../../checkpoint/fusion/attn/weight_decay_0.01/adam_epsilon_1e-6/output_base_lr_1e-5_bz_12_epoch_5_adamw_warmup_step_0_fusion_layer_256_float
 #    --output_dir=../../checkpoint/fusion/attn/weight_decay_0.01/adam_epsilon_1e-8/output_base_lr_1e-5_bz_12_epoch_5_adamw_warmup_step_0_fusion_layer_256_float
 #    --output_dir=../../checkpoint/fusion/attn/weight_decay_0.01/adam_epsilon_1e-7/output_base_lr_1e-5_bz_12_epoch_5_adamw_warmup_step_0_fusion_layer_256_float
->>>>>>> 80d39d25217c594ebd76a6b6accc089d58d884a1
 #    --output_dir=../../checkpoint/fusion/attn/weight_decay_0.01/adam_epsilon_1e-8/output_base_lr_2e-5_bz_12_epoch_5_adamw_warmup_step_0_fusion_layer_256
 #    --output_dir=../../checkpoint/fusion/attn/weight_decay_0.01/adam_epsilon_1e-6/output_base_lr_5e-6_bz_12_epoch_5_adamw_warmup_step_0_fusion_layer_256
 #    --output_dir=../../checkpoint/fusion/attn/weight_decay_0.01/adam_epsilon_1e-8/output_base_lr_5e-6_bz_12_epoch_5_adamw_warmup_step_0_fusion_layer_256
