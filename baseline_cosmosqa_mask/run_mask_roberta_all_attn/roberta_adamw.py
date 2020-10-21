@@ -85,9 +85,9 @@ def init_optimizer(args, train_dataloader, model):
 
     # debug 4:
     # args.weight_decay = 0.1
-    args.weight_decay = 0.05
+    # args.weight_decay = 0.05
     # args.weight_decay = 0.02
-    # args.weight_decay = 0.01
+    args.weight_decay = 0.01
     # args.weight_decay = 0
 
     # debug 5:
@@ -181,6 +181,7 @@ def train(args, train_dataset, dev_dataset, model):
             epoch_step += 1
 
             if (step + 1) % args.gradient_accumulation_steps == 0:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
                 optimizer.step()
                 scheduler.step()  # Update learning rate schedule
                 model.zero_grad()

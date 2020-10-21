@@ -45,20 +45,19 @@ def main():
 
     if args.model_choice == "large":
         args.per_gpu_train_batch_size = 1
-        args.per_gpu_eval_batch_size = 2
+        args.per_gpu_eval_batch_size  = 2
         args.model_name_or_path = os.path.join(grg_dir, "pretrained_model/roberta-large")
     elif args.model_choice == "base":
         args.per_gpu_train_batch_size = 3
-        args.per_gpu_eval_batch_size = 4
+        args.per_gpu_eval_batch_size  = 4
         args.model_name_or_path = os.path.join(grg_dir, "pretrained_model/roberta-base")
-        print("args.per_gpu_train_batch_size = ", args.per_gpu_train_batch_size)
     else:
         raise ValueError
 
     args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
     args.eval_batch_size  = args.per_gpu_eval_batch_size  * max(1, args.n_gpu)
     print("args.train_batch_size = ", args.train_batch_size)
-    print("args.eval_batch_size = ", args.eval_batch_size)
+    print("args.eval_batch_size = ",  args.eval_batch_size)
 
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
@@ -97,12 +96,7 @@ def main():
     config_class, model_class, tokenizer_class = RobertaConfig, RobertaForMultipleChoice, RobertaTokenizer
     config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path,
                                           num_labels=4, finetuning_task=args.task_name)
-
     tokenizer = tokenizer_class.from_pretrained(args.model_name_or_path, do_lower_case=args.do_lower_case)
-
-    # model = model_class.from_pretrained(args.model_name_or_path,
-    #                                     from_tf=bool('.ckpt' in args.model_name_or_path),
-    #                                     config=config)
     model = model_class.from_pretrained(args.model_name_or_path)
 
     train_dataset, dev_dataset = read_features(args)

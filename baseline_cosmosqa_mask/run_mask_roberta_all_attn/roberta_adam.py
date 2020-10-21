@@ -48,7 +48,7 @@ def set_seed(args):
         torch.cuda.manual_seed_all(args.seed)
 
 
-def train(args, train_dataset, dev_dataset, model, tokenizer):
+def train(args, train_dataset, dev_dataset, model):
     """ Train the model """
     train_sampler = RandomSampler(train_dataset) if args.local_rank == -1 else DistributedSampler(train_dataset)
     train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size)
@@ -120,7 +120,7 @@ def train(args, train_dataset, dev_dataset, model, tokenizer):
                 assert args.logging_steps == args.save_steps
                 if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0:
                     # Save model checkpoint
-                    results = eval(args, model, dev_dataset, prefix="", test=False)
+                    results = eval(args, model, dev_dataset)
 
                     # TODO add visdom visualization
                     eval_loss = results["eval_loss"]
@@ -153,7 +153,7 @@ def train(args, train_dataset, dev_dataset, model, tokenizer):
                 break
 
         # TODO trian and evaluate
-        results = eval(args, model, dev_dataset, prefix="", test=False)
+        results = eval(args, model, dev_dataset)
         train_loss = epoch_loss / epoch_step
         eval_loss = results["eval_loss"]
         eval_accu = results["eval_acc"]
@@ -183,7 +183,7 @@ def train(args, train_dataset, dev_dataset, model, tokenizer):
     return global_step, tr_loss / global_step, best_step
 
 
-def eval(args, model, eval_dataset, prefix="", test=False):
+def eval(args, model, eval_dataset):
     eval_task_names = (args.task_name,)
     eval_output_dir = args.output_dir
 
