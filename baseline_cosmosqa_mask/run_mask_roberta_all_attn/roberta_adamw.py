@@ -78,16 +78,16 @@ def init_optimizer(args, train_dataloader, model):
     # args.warmup_steps = int(t_total * 0.1)
 
     # debug 3:
-    # args.adam_epsilon = 1e-6
+    args.adam_epsilon = 1e-6
     # args.adam_epsilon = 1e-7
-    args.adam_epsilon = 1e-8
+    # args.adam_epsilon = 1e-8
     # args.adam_epsilon = 1e-9
 
     # debug 4:
     # args.weight_decay = 0.1
-    # args.weight_decay = 0.05
+    args.weight_decay = 0.05
     # args.weight_decay = 0.02
-    args.weight_decay = 0.01
+    # args.weight_decay = 0.01
     # args.weight_decay = 0
 
     # debug 5:
