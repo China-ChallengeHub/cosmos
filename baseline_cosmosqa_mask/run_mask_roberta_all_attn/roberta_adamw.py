@@ -15,7 +15,6 @@ from tqdm import trange
 from torch.utils.data import DataLoader
 from torch.utils.data import RandomSampler
 from torch.utils.data import SequentialSampler
-from torch.utils.data.distributed import DistributedSampler
 
 cur_path = os.path.abspath(__file__)
 cur_dir = os.path.dirname(cur_path)
@@ -63,7 +62,6 @@ def set_seed(args):
 
 def init_optimizer(args, train_dataloader, model):
     args.num_train_epochs = 5
-
     if args.max_steps > 0:
         t_total = args.max_steps
         args.num_train_epochs = args.max_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1
@@ -181,7 +179,7 @@ def train(args, train_dataset, dev_dataset, model):
             epoch_step += 1
 
             if (step + 1) % args.gradient_accumulation_steps == 0:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+                # torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
                 optimizer.step()
                 scheduler.step()  # Update learning rate schedule
                 model.zero_grad()

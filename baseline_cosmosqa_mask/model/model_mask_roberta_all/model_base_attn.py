@@ -380,13 +380,14 @@ class RobertaForMultipleChoice_Fusion_Layer(BertPreTrainedModel):
         self.layer_size  = int(self.hidden_size / self.n_layer)
 
         self.roberta = RobertaModel(config)
+        # debug
         self.transformer_mrc = Trans_Encoder_layer(n_layers=3,
                                                    n_head=12,
                                                    d_k=64,
                                                    d_v=64,
                                                    d_model=768,
-                                                   d_inner=4096,
-                                                   dropout=0.1)
+                                                   d_inner=3072,
+                                                   dropout=0.2)
 
         self.pooler = BertPooler(config)
 
@@ -508,16 +509,9 @@ class RobertaForMultipleChoice_Fusion_Layer(BertPreTrainedModel):
         # slf_attn_mask: n_layer * (batch_size * choice_num * n_head) * seq_len * seq_len
         slf_attn_mask = slf_attn_mask.view(self.n_layer, -1, seq_len, seq_len)
 
-        # debug: 绝对不可以加
-        # slf_attn_mask = slf_attn_mask.byte()
-
         tran_attn = self.transformer_mrc(enc_output=roberta_attn,
                                          non_pad_mask=non_pad_mask,
                                          slf_attn_mask=slf_attn_mask)
-
-        # Debug: pooled_output分类器并非取自sequence_output[:, 0]
-        # sequence_output = bert_attn + tran_attn
-        # pooled_output = sequence_output[:, 0]
 
         sequence_output = roberta_attn + tran_attn
         pooled_output = self.pooler(sequence_output)
