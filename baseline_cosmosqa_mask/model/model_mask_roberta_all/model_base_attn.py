@@ -98,6 +98,7 @@ class Trans_Encoder_layer(nn.Module):
 
         for idx, enc_layer in enumerate(self.layer_stack):
             _slf_attn_mask = slf_attn_mask[idx]
+            # _slf_attn_mask = _slf_attn_mask.byte()
 
             enc_output, enc_slf_attn = enc_layer(
                 enc_output,

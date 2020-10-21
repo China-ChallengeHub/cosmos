@@ -53,7 +53,7 @@ def set_seed(args):
 
     # set default tensor type
     # torch.set_default_tensor_type(torch.cuda.DoubleTensor)
-    torch.set_default_tensor_type(torch.cuda.FloatTensor)
+    # torch.set_default_tensor_type(torch.cuda.FloatTensor)
 
     if args.n_gpu > 0:
         torch.cuda.manual_seed_all(args.seed)  # 为所有GPU设置随机种子
@@ -62,10 +62,7 @@ def set_seed(args):
 
 
 def init_optimizer(args, train_dataloader, model):
-    # debug 1
-    # args.num_train_epochs = 3
     args.num_train_epochs = 5
-    # args.num_train_epochs = 10
 
     if args.max_steps > 0:
         t_total = args.max_steps
@@ -75,8 +72,8 @@ def init_optimizer(args, train_dataloader, model):
 
     # debug 2:
     args.t_total = t_total
-    args.warmup_steps = 0
-    # args.warmup_steps = 1000
+    # args.warmup_steps = 0
+    args.warmup_steps = 1000
     # args.warmup_steps = 1500
     # args.warmup_steps = int(t_total * 0.1)
 
