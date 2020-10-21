@@ -103,7 +103,7 @@ def main():
 
     # Training
     if args.do_train:
-        global_step, tr_loss, best_step = train(args, train_dataset, dev_dataset, model, tokenizer)
+        global_step, tr_loss, best_step = train(args, train_dataset, dev_dataset, model)
         logger.info(" global_step = %s, average loss = %s, best_step = %s", global_step, tr_loss, best_step)
 
 
