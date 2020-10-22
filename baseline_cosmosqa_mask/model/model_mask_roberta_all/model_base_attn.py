@@ -380,14 +380,13 @@ class RobertaForMultipleChoice_Fusion_Layer(BertPreTrainedModel):
         self.layer_size  = int(self.hidden_size / self.n_layer)
 
         self.roberta = RobertaModel(config)
-        # debug
         self.transformer_mrc = Trans_Encoder_layer(n_layers=3,
                                                    n_head=12,
                                                    d_k=64,
                                                    d_v=64,
                                                    d_model=768,
-                                                   d_inner=3072,
-                                                   dropout=0.2)
+                                                   d_inner=4096,
+                                                   dropout=0.1)
 
         self.pooler = BertPooler(config)
 
