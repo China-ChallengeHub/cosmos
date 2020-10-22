@@ -110,12 +110,6 @@ def main():
     print("args.learning_rate = ",    args.learning_rate)
     print("args.n_gpu = ",            args.n_gpu)
 
-    # Training
-    if args.do_train:
-        print("[TIME] --- time: {} ---, start train".format(time.ctime(time.time())))
-        global_step, tr_loss, best_step = train(args, train_dataset, dev_dataset, model)
-        logger.info(" global_step = %s, average loss = %s, best_step = %s", global_step, tr_loss, best_step)
-
     if args.do_eval:
         print("[TIME] --- time: {} ---, start eval".format(time.ctime(time.time())))
         result = eval(args, model, dev_dataset)

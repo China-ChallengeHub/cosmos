@@ -81,7 +81,7 @@ def main():
             from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_attn import \
                 RobertaForMultipleChoice_Fusion_Layer as RobertaForMultipleChoice
         elif args.bert_model_choice == "fusion_all":
-            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_base_attn import \
+            from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_attn import \
                 RobertaForMultipleChoice_Fusion_All as RobertaForMultipleChoice
         elif args.bert_model_choice == "fusion_head_bert_attn":
             from baseline_cosmosqa_mask.model.model_mask_roberta_all.model_large_attn import \
@@ -91,7 +91,12 @@ def main():
     else:
         raise ValueError
 
+    model_name = "checkpoint/best/output_base_lr_1e-5_bz_12_epoch_5_adamw_warmup_step_0_fusion_layer"
+    args.model_name_or_path = os.path.join(gra_dir, model_name)
     config_class, model_class, tokenizer_class = RobertaConfig, RobertaForMultipleChoice, RobertaTokenizer
+    config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path,
+                                          num_labels=4, finetuning_task=args.task_name)
+    tokenizer = tokenizer_class.from_pretrained(args.model_name_or_path, do_lower_case=args.do_lower_case)
     model = model_class.from_pretrained(args.model_name_or_path)
     model.cuda()
     # multi-gpu training (should be after apex fp16 initialization)
@@ -100,7 +105,6 @@ def main():
         model = torch.nn.DataParallel(model, device_ids=gpu_ids)
 
     train_dataset, dev_dataset = read_features(args)
-
     print("args.train_batch_size = ", args.train_batch_size)
     print("args.eval_batch_size = ",  args.eval_batch_size)
     print("args.learning_rate = ",    args.learning_rate)
@@ -108,7 +112,7 @@ def main():
 
     if args.do_eval:
         print("[TIME] --- time: {} ---, start eval".format(time.ctime(time.time())))
-        result = eval(args, model, dev_dataset, prefix="", test=False)
+        result = eval(args, model, dev_dataset)
         print("eval_acc: {}, eval_loss: {}".format(result["eval_acc"], result["eval_loss"]))
 
 

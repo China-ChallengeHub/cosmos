@@ -235,13 +235,16 @@ class Roberta_Encoder(BertPreTrainedModel):
         flat_position_ids    = None
         flat_head_mask       = None
 
-        # bert_attn:     [batch_size * choice_num, seq_len, hidden]
+        # roberta_attn:  [batch_size * choice_num, seq_len, hidden]
         # pooled_output: [batch_size * choice_num, hidden]
         roberta_attn, pooled_output = self.roberta(input_ids=flat_input_ids,
                                                    token_type_ids=flat_token_type_ids,
                                                    attention_mask=flat_attention_mask,
                                                    position_ids=flat_position_ids,
                                                    head_mask=flat_head_mask)
+
+        roberta_attn = roberta_attn.view(batch_size, num_choices, seq_len, -1)
+        pooled_output = pooled_output.view(batch_size, num_choices, -1)
         return roberta_attn, pooled_output
 
 
@@ -287,6 +290,7 @@ class TransformerForMultipleChoice_Fusion_Layer(nn.Module):
         batch_size  = input_ids.shape[0]
         num_choices = input_ids.shape[1]
         seq_len     = input_ids.shape[2]
+        hidden_size = roberta_attn.size(-1)
 
         entity_mask = entity_mask.unsqueeze(2).expand(batch_size, num_choices, seq_len, seq_len)
 
@@ -296,16 +300,16 @@ class TransformerForMultipleChoice_Fusion_Layer(nn.Module):
         flat_entity_mask      = entity_mask.view(     -1, 1, seq_len, seq_len)
         flat_sentiment_mask   = sentiment_mask.view(  -1, 1, seq_len, seq_len)
 
+        # roberta_attn: (batch_size * choice_num) * seq_len * hidden_size
+        roberta_attn = roberta_attn.view(-1, seq_len, hidden_size)
+
         # 利用Roberta_attn 的mean pooling学习参数
         # weight: (batch_size * choice_num) * hidden_size
-
         weight = torch.sum(roberta_attn, dim=1) / seq_len
 
         # weight: (batch_size * choice_num) * (n_layer * 4)
         weight = self.linear(weight)
 
-        print("roberta_attn size = ", roberta_attn.size())
-        print("\n")
         # weight: (batch_size * choice_num) * n_layer * 4
         weight = weight.view(batch_size * num_choices, self.n_layer, 4)
 

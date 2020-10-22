@@ -68,47 +68,11 @@ def init_optimizer(args, train_dataloader, model):
     else:
         t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.num_train_epochs
 
-    # debug 2:
     args.t_total = t_total
     args.warmup_steps = 0
-    # args.warmup_steps = 1000
-    # args.warmup_steps = 1500
-    # args.warmup_steps = int(t_total * 0.1)
-
-    # debug 3:
     args.adam_epsilon = 1e-6
-    # args.adam_epsilon = 1e-7
-    # args.adam_epsilon = 1e-8
-    # args.adam_epsilon = 1e-9
-
-    # debug 4:
-    # args.weight_decay = 0.1
-    # args.weight_decay = 0.05
-    # args.weight_decay = 0.02
     args.weight_decay = 0.01
-    # args.weight_decay = 0
-
-    # debug 5:
-    # args.learning_rate = 5e-6
     args.learning_rate = 1e-5
-    # args.learning_rate = 2e-5
-    # args.learning_rate = 3e-5
-
-    # debug 6:
-    # args.seed = 42
-    # args.seed = 5233
-
-    print("args.num_train_epochs = ", args.num_train_epochs)
-    print("args.t_total = ",          args.t_total)
-    print("args.train_batch_size = ", args.train_batch_size)
-    print("args.eval_batch_size = ",  args.eval_batch_size)
-    print("args.n_gpu = ",            args.n_gpu)
-    print("args.seed = ",             args.seed)
-    print("args.warmup_steps = ",     args.warmup_steps)
-    print("args.adam_epsilon = ",     args.adam_epsilon)
-    print("args.weight_decay = ",     args.weight_decay)
-    print("args.learning_rate = ",    args.learning_rate)
-    print("args.max_grad_norm = ",    args.max_grad_norm)
 
     args_path = os.path.join(args.output_dir, "args.json")
     with open(args_path, "w", encoding="utf-8") as writer:
