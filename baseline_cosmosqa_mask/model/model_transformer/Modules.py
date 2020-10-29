@@ -23,6 +23,8 @@ class ScaledDotProductAttention(nn.Module):
         attn = torch.bmm(q, k.transpose(1, 2))
         attn = attn / self.temperature
 
+        # attn: [n_head * bsz] * len_q * len_k
+        # mask: [n_head * bsz] * len_q * len_k
         if mask is not None:
             # attn = attn.masked_fill(mask, -np.inf)
             attn = attn.mul(mask)

@@ -425,6 +425,12 @@ class RobertaForMultipleChoice_Fusion_Layer(BertPreTrainedModel):
         flat_dependency_mask  = dependency_mask.view( -1, seq_len, seq_len)
         flat_entity_mask      = entity_mask.view(     -1, seq_len, seq_len)
         flat_sentiment_mask   = sentiment_mask.view(  -1, seq_len, seq_len)
+        # flat_input_ids:        [batch_size * choice_num, seq_len]
+        # flat_attention_mask:   [batch_size * choice_num, seq_len]
+        # flat_commonsense_mask: [batch_size * choice_num, seq_len, seq_len]
+        # flat_dependency_mask:  [batch_size * choice_num, seq_len, seq_len]
+        # flat_entity_mask:      [batch_size * choice_num, seq_len, seq_len]
+        # flat_sentiment_mask:   [batch_size * choice_num, seq_len, seq_len]
 
         flat_position_ids    = None
         flat_head_mask       = None
@@ -442,6 +448,12 @@ class RobertaForMultipleChoice_Fusion_Layer(BertPreTrainedModel):
         flat_dependency_mask  = flat_dependency_mask.view( -1, 1, seq_len, seq_len)
         flat_entity_mask      = flat_entity_mask.view(     -1, 1, seq_len, seq_len)
         flat_sentiment_mask   = flat_sentiment_mask.view(  -1, 1, seq_len, seq_len)
+        # flat_input_ids:        [batch_size * choice_num, 1, seq_len]
+        # flat_attention_mask:   [batch_size * choice_num, 1, seq_len]
+        # flat_commonsense_mask: [batch_size * choice_num, 1, seq_len, seq_len]
+        # flat_dependency_mask:  [batch_size * choice_num, 1, seq_len, seq_len]
+        # flat_entity_mask:      [batch_size * choice_num, 1, seq_len, seq_len]
+        # flat_sentiment_mask:   [batch_size * choice_num, 1, seq_len, seq_len]
 
         # 利用roberta_attn学习参数
         # roberta_attn: (batch_size * choice_num) * seq_len * hidden

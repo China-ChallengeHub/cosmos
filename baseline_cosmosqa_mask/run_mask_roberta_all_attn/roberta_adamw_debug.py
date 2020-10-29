@@ -291,7 +291,7 @@ def train(args, train_dataset, dev_dataset, roberta_model, transformer_model):
             torch.save(    roberta_model_to_save.state_dict(),     roberta_model_path)
             torch.save(transformer_model_to_save.state_dict(), transformer_model_path)
 
-            args_path = os.path.join(args.output_dir, f"train_args.bin")
+            args_path = os.path.join(args.output_dir, f"training_args.bin")
             torch.save(args, args_path)
 
             result_path = os.path.join(args.output_dir, f"eval_result_{global_step}.json")
